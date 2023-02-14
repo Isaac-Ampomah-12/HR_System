@@ -1,0 +1,52 @@
+type Query {
+  hello: String
+  departments: [Department]
+  department(id: ID): Department
+  users: [User]
+  user(id:ID): User
+}
+
+type Mutation {
+  departmentCreate(data: DepartmentInput): Department
+  userCreate(data: UserInput): User
+  signIn(data: CredentialInput): UserToken
+}
+
+type User{
+  id: ID
+  name: String
+  role: Int
+  email: String
+  # password  String
+  departmentId: Int
+  department: Department
+}
+
+type Department{
+  id: ID
+  name: String
+  users: [User]
+}
+
+input UserInput{
+  id: ID
+  name: String
+  email: String
+  role: Int
+  password: String
+  departmentId: Int
+}
+
+input CredentialInput {
+  email: String
+  password: String
+}
+
+type UserToken {
+  token: String
+}
+
+input DepartmentInput{
+  id: ID
+  name: String
+}
