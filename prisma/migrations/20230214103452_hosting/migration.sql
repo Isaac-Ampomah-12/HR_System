@@ -5,6 +5,7 @@ CREATE TABLE "User" (
     "role" INTEGER NOT NULL,
     "password" TEXT NOT NULL,
     "departmentId" INTEGER NOT NULL,
+    "email" TEXT NOT NULL,
 
     CONSTRAINT "User_pkey" PRIMARY KEY ("id")
 );
@@ -16,6 +17,9 @@ CREATE TABLE "Department" (
 
     CONSTRAINT "Department_pkey" PRIMARY KEY ("id")
 );
+
+-- CreateIndex
+CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
 -- AddForeignKey
 ALTER TABLE "User" ADD CONSTRAINT "User_departmentId_fkey" FOREIGN KEY ("departmentId") REFERENCES "Department"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
