@@ -12,6 +12,12 @@ type Mutation {
   signIn(data: CredentialInput): UserToken
 }
 
+
+
+type departmentResolvers{
+  departmentCreate(data: DepartmentInput): Department
+}
+
 type User{
   id: ID
   name: String

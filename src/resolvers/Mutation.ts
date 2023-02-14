@@ -38,7 +38,7 @@ export const Mutation = {
         // destracture the user input
         const {name} = data;
     
-        // check if user exists
+        // get logged in user information
         const checkUser = await prisma.user.findUnique({
             where: {
                 id: Number(userInfo.userId)
@@ -47,12 +47,27 @@ export const Mutation = {
 
         // check if user is an admin
         if(checkUser.role === 1){
-            // create department
-            return await prisma.department.create({
-                data: {
+
+            // check if the department name already exists
+            const checkDepartmant = await prisma.user.findMany({
+                where: {
                     name
                 }
-            });
+            })
+
+            console.log(checkDepartmant);
+
+            // check if name does not exist
+            if(checkDepartmant.length === 0){
+                // create department
+                return await prisma.department.create({
+                    data: {
+                        name
+                    }
+                });
+            } else{
+                return new GraphQLError(`Name already taken`)
+            }
         }else{
             return new GraphQLError(`Forbidden access`)
         }
@@ -61,40 +76,51 @@ export const Mutation = {
     userCreate: async (_: any, {data}: userArgs, {prisma, userInfo}:Context) => {
         try{
 
-            const hashedPassword = await bcrypt.hash(data.password, 10);
-            console.log(hashedPassword)
-
             // check if user is logged in
-            // if(!userInfo){
-            //     return new GraphQLError(`You are not logged in`)
-            // }
+            if(!userInfo){
+                return new GraphQLError(`You are not logged in`)
+            }
 
             // destracture user input
             const {name, email, role, password, departmentId} = data;
 
             // yup validation schema
-            // const yupValidator = yup.object({
-            //     name: yup.string().required().max(50).min(1),
-            //     email: yup.string().email(),
-            //     password: yup.string().min(8),
-            //     role: yup.number().max(1),
-            //     departmentId: yup.number()
-            // })
+            const yupValidator = yup.object({
+                name: yup.string().required().max(50).min(1),
+                email: yup.string().email().required(),
+                password: yup.string().min(8).required(),
+                role: yup.number().max(1).required(),
+                departmentId: yup.number().required()
+            })
 
             // validate data against yup schema
-            // await yupValidator.validate(data);
+            await yupValidator.validate(data);
+
+            // check if the user exists
+            const checkUser = await prisma.user.findUnique({
+                where: {
+                    id: Number(userInfo.userId)
+                }
+            })
+
+             // check if the user is an employee who does not belong to this department
+             if(checkUser.role === 0 ){
+                return new GraphQLError(`Forbidden access`);
+            }
+
+            // check if the user being created already exists
+            const checkNewUser = await prisma.user.findUnique({
+                where: {
+                    email
+                }
+            })
 
 
-            // const checkUser = await prisma.user.findUnique({
-            //     where: {
-            //         id: Number(userInfo.userId)
-            //     }
-            // })
+            if(!checkNewUser){
+                // has password
+                const hashedPassword = await bcrypt.hash(password, 10);
 
-
-            // if(checkUser.role === 1){
-                // const hashedPassword = await bcrypt.hash(password, 10);
-
+                // create user
                 return await prisma.user.create({
                     data: {
                         name,
@@ -102,11 +128,15 @@ export const Mutation = {
                         password: hashedPassword,
                         role,
                         departmentId,
+                    },
+
+                    include: {
+                        department: true
                     }
                 })
-            // }else{
-            //     return new GraphQLError(`Forbidden access`)
-            // }
+            }else{
+                return new GraphQLError(`User already exist`)
+            }
 
         }catch(error){
             return error
@@ -115,6 +145,16 @@ export const Mutation = {
     
     signIn: async(_: any, {data}: signinArgs, {prisma}:Context) => {
         const {email, password} = data;
+
+        // yup validation schema
+        const yupValidator = yup.object({
+            email: yup.string().email().required(),
+            password: yup.string().min(8).required(),
+
+        })
+
+        // validate data against yup schema
+        await yupValidator.validate(data);
         
         // Check if the email exist in the database
         const user = await prisma.user.findUnique({

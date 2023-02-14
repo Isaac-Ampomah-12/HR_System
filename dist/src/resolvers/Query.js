@@ -42,15 +42,26 @@ export const QueryResolvers = {
             if (checkUser.role === 0 && checkUser.departmentId !== Number(id)) {
                 return new GraphQLError(`Forbidden access`);
             }
-            // return the department details
-            return await prisma.department.findUnique({
+            // check if the searched department id exist
+            const checkId = await prisma.user.findUnique({
                 where: {
                     id: Number(id)
-                },
-                include: {
-                    users: true
-                },
+                }
             });
+            if (checkId) {
+                // return the department details
+                return await prisma.department.findUnique({
+                    where: {
+                        id: Number(id)
+                    },
+                    include: {
+                        users: true
+                    },
+                });
+            }
+            else {
+                return new GraphQLError(`Id does not exist`);
+            }
         },
         users: async (_, __, { prisma, userInfo }) => {
             // check if user is logged in
@@ -73,7 +84,11 @@ export const QueryResolvers = {
                     id: "desc"
                 },
                 include: {
-                    department: true
+                    department: {
+                        include: {
+                            users: true
+                        }
+                    }
                 }
             });
         },
@@ -82,7 +97,7 @@ export const QueryResolvers = {
             if (!userInfo) {
                 return new GraphQLError(`You are not logged in`);
             }
-            // check if user exists
+            // get logged in user information
             const checkUser = await prisma.user.findUnique({
                 where: {
                     id: Number(userInfo.userId)
@@ -92,20 +107,30 @@ export const QueryResolvers = {
             if (checkUser.role === 0 && checkUser.id !== Number(id)) {
                 return new GraphQLError(`Forbidden access`);
             }
-            // return the user details
-            return await prisma.user.findUnique({
+            // check if the searched user exist
+            const checkId = await prisma.user.findUnique({
                 where: {
                     id: Number(id)
-                },
-                include: {
-                    department: true
                 }
             });
-        }
-    },
-    Department: {
-        users: (parent, __, { prisma }) => {
-            console.log(parent);
+            if (checkId) {
+                return await prisma.user.findUnique({
+                    where: {
+                        id: Number(id)
+                    },
+                    include: {
+                        // department: true
+                        department: {
+                            include: {
+                                users: true
+                            }
+                        }
+                    }
+                });
+            }
+            else {
+                return new GraphQLError(`Id does not exist`);
+            }
         }
     }
 };
