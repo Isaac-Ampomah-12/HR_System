@@ -19,14 +19,13 @@ export const Mutation = {
         });
         // check if user is an admin
         if (checkUser.role === 1) {
-            // check if the department name already exists
-            const checkDepartmant = await prisma.user.findMany({
+            // check department details
+            const checkDepartmant = await prisma.department.findMany({
                 where: {
                     name
                 }
             });
-            console.log(checkDepartmant);
-            // check if name does not exist
+            // check if the department name already exists
             if (checkDepartmant.length === 0) {
                 // create department
                 return await prisma.department.create({
