@@ -1,7 +1,6 @@
 // export * from "./Query"
 export * from "./Query.js";
 export * from "./Mutation.js";
-export * from "./Signin.js";
 // import {mergeResolvers} from '@graphql-tools/merge';
 // import {loadFilesSync} from '@graphql-tools/load-files';
 // import path from 'path';
